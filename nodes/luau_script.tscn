@@ -1,0 +1,557 @@
+[gd_scene load_steps=6 format=3 uid="uid://ciq2dxc2u5fg0"]
+
+[ext_resource type="Script" path="res://nodes/luau_script.gd" id="1_5qhsu"]
+
+[sub_resource type="GDScript" id="GDScript_642gj"]
+script/source = "extends Node
+
+
+@export var luau_script : LuauScript
+@export var luau_vm : LuauVM
+@export var starscade_library_node : Node
+
+var is_active := false
+
+
+func initialize_vm() -> void:
+	luau_vm.open_all_libraries()
+	_open_package_library()
+	_open_starscade_library()
+	_run_init_lua()
+	luau_vm.getglobal(\"package\")
+	luau_vm.pushdictionary({})
+	luau_vm.setfield(-2, \"loaded\")
+	luau_vm.pop(1)
+	is_active = true
+
+
+func _open_starscade_library() -> void:
+	var starscade_library := {
+		is_server = self._luau_starscade_is_server,
+		is_client = self._luau_starscade_is_client,
+		is_local = self._luau_starscade_is_local,
+		is_remote = self._luau_starscade_is_remote,
+	}
+	
+	starscade_library[\"self\"] = self._luau_starscade_self
+	starscade_library[\"owner\"] = self._luau_starscade_owner
+	
+	for child in starscade_library_node.get_children():
+		child.initialize(starscade_library)
+	
+	luau_vm.pushdictionary(starscade_library)
+	luau_vm.setglobal(\"starscade\")
+
+
+func _open_package_library() -> void:
+	luau_vm.pushdictionary({
+		loaded = {},
+		path = \"?.lua;lib/?.lua\",
+	})
+	luau_vm.setglobal(\"package\")
+	
+	luau_vm.pushcallable(self._luau_require)
+	luau_vm.setglobal(\"require\")
+
+
+func _normalize_require_path(s: String) -> String:
+	s = s.to_lower()
+	
+	var ends_with_dotlua := s.ends_with(\".lua\")
+	var is_modern := s.find(\"/\") != -1 or ends_with_dotlua
+	if not is_modern and ends_with_dotlua:
+		return \"\"
+	
+	if not is_modern:
+		return s.replace(\".\", \"/\")
+	
+	if s.find(\"..\") != -1 or s.find(\":\") != -1:
+		return \"\"
+	
+	if ends_with_dotlua:
+		s = s.left(-4)
+	return s
+
+func _require_get_paths(s: String) -> Array:
+	luau_vm.getglobal(\"package\")
+	if not luau_vm.istable(-1):
+		luau_vm.pop(1)
+		luau_vm.error_with_traceback(\"global 'package' is not a table\")
+		return []
+
+	luau_vm.getfield(-1, \"path\")
+	if not luau_vm.isstring(-1):
+		luau_vm.pop(2)
+		luau_vm.error_with_traceback(\"global 'package.path' is not a string\")
+		return []
+	var package_path := luau_vm.tostring(-1)
+	luau_vm.pop(2)
+	var raw_paths := package_path.split(\";\", false, 32)
+	var paths := []
+	for raw_path in raw_paths:
+		paths.push_back(raw_path.replace(\"?\", s))
+	return paths
+
+
+func _luau_require() -> int:
+	var nargs := luau_vm.gettop()
+	
+	if is_active:
+		luau_vm.pop(nargs)
+		luau_vm.error_with_traceback(\"require not implemented yet, one file only :(\")
+		return 0
+		
+	if nargs == 0:
+		luau_vm.pop(nargs)
+		luau_vm.error_with_traceback(\"missing argument #1 to 'require' (string expected)\")
+		return 0
+		
+	if not (luau_vm.isstring(1)):
+		luau_vm.pop(nargs)
+		luau_vm.error_with_traceback(\"invalid argument #1 to 'require' (string expected)\")
+		return 0
+	
+	var raw_require_path : String = luau_vm.tostring(1)
+	var require_path := _normalize_require_path(raw_require_path)
+	if require_path.is_empty():
+		luau_vm.pop(nargs)
+		luau_vm.error_with_traceback(\"require path is invalid\")
+		return 0
+	luau_vm.pop(nargs)
+	
+	# consumed arguments, stack empty
+	
+	luau_vm.getglobal(\"package\")
+	if not luau_vm.istable(-1):
+		luau_vm.pop(1)
+		luau_vm.error_with_traceback(\"global 'package' is not a table\")
+		return 0
+	
+	luau_vm.getfield(-1, \"loaded\")
+	luau_vm.remove(-2)
+	if not luau_vm.istable(-1):
+		luau_vm.pop(1)
+		luau_vm.error_with_traceback(\"global 'package.loaded' is not a table\")
+		return 0
+	
+	luau_vm.pushstring(require_path)
+	luau_vm.gettable(-2)
+	if not luau_vm.isnil(-1):
+		luau_vm.remove(-2)
+		return 1
+	luau_vm.pop(2)
+	
+	var paths := _require_get_paths(require_path)
+	var prefix := \"user://lmao/\" if is_active else \"res://lua/env/\"	
+	
+	var file : FileAccess = null
+	for path in paths:
+		var full_path : String = prefix + path
+		var exists := FileAccess.file_exists(full_path)
+		if not exists:
+			continue
+		file = FileAccess.open(full_path, FileAccess.READ)
+		if file != null:
+			break
+	
+	if file == null:
+		luau_vm.error_with_traceback(\"can't find file '{p}'. ({pc} paths checked)\".format({
+			p = raw_require_path,
+			pc = paths.size()
+			}))
+		return 0
+	
+	var contents := file.get_as_text()
+	var nreturns := luau_vm.do_string(contents, require_path)
+	if nreturns == -1:
+		luau_vm.error()
+		return 0
+	if nreturns > 1:
+		luau_vm.pop(nreturns - 1)
+	if nreturns == 0:
+		luau_vm.pushnil()
+	
+	luau_vm.getglobal(\"package\")
+	if not luau_vm.istable(-1):
+		luau_vm.pop(2)
+		luau_vm.error_with_traceback(\"global 'package' is not a table\")
+		return 0
+	
+	luau_vm.getfield(-1, \"loaded\")
+	luau_vm.remove(-2)
+	if not luau_vm.istable(-1):
+		luau_vm.pop(2)
+		luau_vm.error_with_traceback(\"global 'package.loaded' is not a table\")
+		return 0
+	
+	var loaded_path_key := require_path.replace(\"/\", \".\")
+	if not luau_vm.isnil(1):
+		luau_vm.pushvalue(1)
+	else:
+		luau_vm.pushboolean(true)
+	luau_vm.setfield(-2, loaded_path_key)
+	luau_vm.pop(1)
+	
+	return 1
+
+
+func _run_init_lua() -> void:
+	var file := FileAccess.open(\"res://lua/init.lua\", FileAccess.READ)
+	if file == null:
+		push_error(\"init.lua missing\")
+	var nreturns := luau_vm.do_string(file.get_as_text(), \"init.lua\")
+	if nreturns == -1:
+		push_error(luau_vm.tostring(-1))
+		luau_vm.pop(1)
+		return
+
+
+func _luau_starscade_is_server() -> int:
+	luau_vm.pop(luau_vm.gettop())
+	luau_vm.pushboolean(multiplayer.is_server())
+	return 1
+
+func _luau_starscade_is_client() -> int:
+	luau_vm.pop(luau_vm.gettop())
+	luau_vm.pushboolean(not multiplayer.is_server())
+	return 1
+
+func _luau_starscade_is_local() -> int:
+	luau_vm.pop(luau_vm.gettop())
+	luau_vm.pushboolean(luau_script.owner_id == multiplayer.get_unique_id())
+	return 1
+
+func _luau_starscade_is_remote() -> int:
+	luau_vm.pop(luau_vm.gettop())
+	luau_vm.pushboolean(luau_script.owner_id != multiplayer.get_unique_id())
+	return 1
+
+
+func _luau_starscade_self() -> int:
+	luau_vm.pop(luau_vm.gettop())
+	return 0
+
+
+func _luau_starscade_owner() -> int:
+#	var player := luau_script.get_script_owner()
+#	if player == null: return 0
+#
+#	var luau_component := Starscade.get_luau_component(player)
+#	if luau_component == null: return 0
+#
+#	if not luau_component.is_registered(luau_script):
+#		luau_component.register(luau_script)
+#
+	#luau_component.push(luau_script)
+	return 0
+
+"
+
+[sub_resource type="GDScript" id="GDScript_tq3gc"]
+script/source = "extends Node
+
+
+signal error(s: String)
+
+@export var luau_vm : LuauVM
+@export var luau_utility : Node
+
+
+func invoke_event(event_name: String, arguments: Array = []) -> Array:
+	var success := push_event_invokefunction(event_name)
+	if not success:
+		return []
+	
+	for argument in arguments:
+		luau_vm.pushvariant(argument)
+	var err := luau_vm.pcall(luau_vm.gettop() - 1, -1, 0)
+	if err != 0:
+		var error_message := luau_vm.tostring(-1)
+		luau_vm.pop(1)
+		error.emit(error_message)
+		return []
+	
+	var nresults := luau_vm.gettop()
+
+	var results := []
+	for i in range(nresults):
+		results.push_back(luau_vm.tovariant(1))
+		luau_vm.remove(1)
+
+	return results
+
+func push_event_invokefunction(event_name: String) -> bool:
+	var success = luau_utility.push_at_path(\"event.\" + event_name + \".invoke\")
+	if not success:
+		return false
+	
+	if not luau_vm.isfunction(-1):
+		luau_vm.pop(1)
+		return false
+	
+	success = luau_utility.push_at_path(\"event.\" + event_name)
+	if not success:
+		luau_vm.pop(1)
+		return false
+	
+	return true
+"
+
+[sub_resource type="GDScript" id="GDScript_b7eqw"]
+script/source = "extends Node
+
+
+@export var luau_vm : LuauVM
+
+func push_at_path(path: String) -> bool:
+	luau_vm.getglobal(\"starscade\")
+	if not luau_vm.istable(-1):
+		luau_vm.pop(1)
+		return false
+
+	var keys := path.split(\".\")
+
+	for i in range(keys.size()):
+		var i_last := i == keys.size() - 1
+		var key = keys[i]
+
+		luau_vm.getfield(-1, key)
+		luau_vm.remove(-2)
+
+		if not i_last and not luau_vm.istable(-1):
+			luau_vm.pop(1)
+			return false
+	return true
+"
+
+[sub_resource type="GDScript" id="GDScript_lcu83"]
+resource_name = "starscade_net.gd"
+script/source = "extends Node
+
+
+@onready var luau_invoker = $\"../../LuauInvoker\"
+@onready var luau_vm : LuauVM = $\"../../LuauVM\"
+
+func initialize(library: Dictionary) -> void:
+	library[\"net\"] = {
+		send = self._net_send
+	}
+	
+	luau_vm.reg_newmetatable(\"NetWriteStream\")
+	luau_vm.pushstring(\"__index\")
+	luau_vm.pushdictionary({
+		write_string = self._nws_write_string,
+		
+		to_all = self._nws_to_all,
+		to_server = self._nws_to_server,
+	})
+	luau_vm.rawset(-3)
+	luau_vm.pop(1)
+	
+	luau_vm.reg_newmetatable(\"NetReadStream\")
+	luau_vm.pushstring(\"__index\")
+	luau_vm.pushdictionary({
+		read_string = self._nrs_read_string,
+	})
+	luau_vm.rawset(-3)
+	luau_vm.pop(1)
+
+
+func _net_send() -> int:
+	if luau_vm.gettop() != 1:
+		luau_vm.pop(luau_vm.gettop())
+		luau_vm.error_with_traceback(\"incorrect number of arguments (expected 1 string)\")
+		return 0
+	
+	if not luau_vm.isstring(1):
+		luau_vm.pop(luau_vm.gettop())
+		luau_vm.error_with_traceback(\"invalid argument #1 (expected string)\")
+		return 0
+	
+	var channel := luau_vm.tostring(1)
+	luau_vm.pop(1)
+	
+	var net_write_stream := {
+		buffer = {},
+		channel = channel,
+	}
+	
+	luau_vm.pushdictionary(net_write_stream)
+	luau_vm.reg_getmetatable(\"NetWriteStream\")
+	luau_vm.setmetatable(-2)
+	
+	return 1
+
+
+func _n_check_self(tname: String) -> bool:
+	if luau_vm.gettop() < 1:
+		luau_vm.error_with_traceback(\"incorrect number of arguments\")
+		return false
+	if not luau_vm.istable(1):
+		luau_vm.error_with_traceback(\"invalid argument #1 (expected \" + tname + \")\")
+		return false
+		
+	if luau_vm.getmetatable(1):
+		luau_vm.reg_getmetatable(tname)
+		if luau_vm.rawequal(-1, -2):
+			luau_vm.pop(2)
+			return true
+	luau_vm.error_with_traceback(\"invalid argument #1 (expected \" + tname + \")\")
+	return false
+
+
+func _nws_write_string() -> int:
+	if not _n_check_self(\"NetWriteStream\"): return 0
+	luau_vm.settop(2)
+	if not luau_vm.isstring(2):
+		luau_vm.error_with_traceback(\"invalid argument #2 (expected string)\")
+		return 0
+	
+	luau_vm.getfield(1, \"buffer\")
+	if not luau_vm.istable(-1):
+		luau_vm.error_with_traceback(\"buffer is broken\")
+		return 0
+	
+	var buffer_length := luau_vm.objlen(-1)
+	luau_vm.pushinteger(buffer_length + 1)
+	luau_vm.pushvalue(2)
+	luau_vm.settable(-3)
+	luau_vm.pop(1) # pop buffer
+	luau_vm.pop(1) # pop argument #2
+	
+	return 1
+
+
+func __nws_get_buffer():
+	luau_vm.getfield(1, \"buffer\")
+	if not luau_vm.istable(-1):
+		luau_vm.error_with_traceback(\"buffer is broken\")
+		return
+	var buffer := luau_vm.todictionary(-1)
+	luau_vm.pop(1)
+	return buffer
+
+func __nws_get_channel():
+	luau_vm.getfield(1, \"channel\")
+	if not luau_vm.isstring(-1):
+		luau_vm.error_with_traceback(\"bad channel\")
+		return
+	var channel := luau_vm.tostring(-1)
+	luau_vm.pop(1)
+	return channel
+
+
+func _nws_to_all() -> int:
+	if not _n_check_self(\"NetWriteStream\"): return 0
+	var buffer = __nws_get_buffer()
+	if buffer == null:
+		return 0
+	var channel = __nws_get_channel()
+	if channel == null:
+		return 0
+	
+	luau_vm.settop(0)
+	if not multiplayer.is_server():
+		luau_vm.error_with_traceback(\"can't use to_all on client\")
+		return 0
+	rpc(&\"_incoming\", channel, buffer)
+	return 0
+
+func _nws_to_server() -> int:
+	if not _n_check_self(\"NetWriteStream\"): return 0
+	var buffer = __nws_get_buffer()
+	if buffer == null:
+		return 0
+	var channel = __nws_get_channel()
+	if channel == null:
+		return 0
+	
+	luau_vm.settop(0)
+	if multiplayer.is_server():
+		luau_vm.error_with_traceback(\"can't use to_server on server\")
+		return 0
+	rpc_id(1, &\"_incoming\", channel, buffer)
+	return 0
+
+
+func _net_listen() -> int:
+	luau_vm.error_with_traceback(\"not implemented\")
+	return 0
+
+
+
+func _nrs_read_string() -> int:
+	if not _n_check_self(\"NetReadStream\"): return 0
+	luau_vm.settop(1)
+	luau_vm.getfield(1, \"buffer\")
+	if not luau_vm.istable(-1):
+		luau_vm.error_with_traceback(\"invalid argument #1 (buffer is broken)\")
+		return 0
+	
+	luau_vm.getfield(1, \"index\")
+	if not luau_vm.next(-2):
+		luau_vm.error_with_traceback(\"end of buffer reached\")
+		return 0
+	
+	if not luau_vm.isstring(-1):
+		luau_vm.error_with_traceback(\"that is not a string\") # stupid
+		return 0
+	luau_vm.pushvalue(-2)
+	luau_vm.setfield(1, \"index\")
+	luau_vm.remove(-2)
+	luau_vm.remove(1)
+	return 1
+
+
+@rpc(\"any_peer\", \"call_remote\", \"unreliable_ordered\")
+func _incoming(channel: String, buffer: Dictionary) -> void:
+	var success = luau_invoker.push_event_invokefunction(\"net\")
+	if not success: return
+	
+	luau_vm.pushstring(channel)
+	
+	var net_read_stream := {
+		buffer = buffer,
+		index = null,
+	}
+	
+	luau_vm.pushdictionary(net_read_stream)
+	luau_vm.reg_getmetatable(\"NetReadStream\")
+	luau_vm.setmetatable(-2)
+	
+	if multiplayer.is_server():
+		var sender := multiplayer.get_remote_sender_id()
+		luau_vm.pushinteger(sender)
+	
+	var err := luau_vm.pcall(luau_vm.gettop() - 1, 0, 0)
+	if err != 0:
+		var error_message := luau_vm.tostring(-1)
+		luau_vm.pop(1)
+		luau_invoker.error.emit(error_message)
+		return
+"
+
+[node name="LuauScript" type="Node"]
+script = ExtResource("1_5qhsu")
+
+[node name="LuauVM" type="LuauVM" parent="."]
+
+[node name="LuauInitializer" type="Node" parent="." node_paths=PackedStringArray("luau_script", "luau_vm", "starscade_library_node")]
+script = SubResource("GDScript_642gj")
+luau_script = NodePath("..")
+luau_vm = NodePath("../LuauVM")
+starscade_library_node = NodePath("../Starscade")
+
+[node name="LuauInvoker" type="Node" parent="." node_paths=PackedStringArray("luau_vm", "luau_utility")]
+script = SubResource("GDScript_tq3gc")
+luau_vm = NodePath("../LuauVM")
+luau_utility = NodePath("../LuauUtility")
+
+[node name="LuauUtility" type="Node" parent="." node_paths=PackedStringArray("luau_vm")]
+script = SubResource("GDScript_b7eqw")
+luau_vm = NodePath("../LuauVM")
+
+[node name="Starscade" type="Node" parent="."]
+
+[node name="Net" type="Node" parent="Starscade"]
+script = SubResource("GDScript_lcu83")

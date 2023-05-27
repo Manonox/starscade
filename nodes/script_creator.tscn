@@ -1,0 +1,10 @@
+[gd_scene load_steps=4 format=3 uid="uid://08nvry4xordw"]
+
+[ext_resource type="Script" path="res://nodes/script_creator.gd" id="1_jmg5c"]
+[ext_resource type="PackedScene" uid="uid://ciq2dxc2u5fg0" path="res://nodes/luau_script.tscn" id="2_31van"]
+[ext_resource type="PackedScene" uid="uid://db6d716580xiu" path="res://nodes/chip.tscn" id="3_ubdvn"]
+
+[node name="ScriptCreator" type="Node"]
+script = ExtResource("1_jmg5c")
+script_scene = ExtResource("2_31van")
+chip_scene = ExtResource("3_ubdvn")

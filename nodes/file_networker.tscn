@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3 uid="uid://dftretthvykyp"]
+
+[sub_resource type="GDScript" id="GDScript_q1bdd"]
+script/source = "extends Node
+class_name FileNetworker
+
+
+"
+
+[node name="FileNetworker" type="Node"]
+script = SubResource("GDScript_q1bdd")

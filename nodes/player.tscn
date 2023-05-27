@@ -1,0 +1,144 @@
+[gd_scene load_steps=17 format=3 uid="uid://bc67kroxxy71j"]
+
+[ext_resource type="PackedScene" uid="uid://d067dddlxbgqa" path="res://addons/network_bodies/network_body_3d.tscn" id="1_x3gup"]
+[ext_resource type="Script" path="res://nodes/player.gd" id="2_vx8lp"]
+[ext_resource type="PackedScene" uid="uid://dn0op74xuu8c5" path="res://components/mouse_look_component.tscn" id="3_dni3q"]
+[ext_resource type="PackedScene" uid="uid://80upqk3bbnaf" path="res://components/player_movement_component.tscn" id="3_t0tep"]
+[ext_resource type="Script" path="res://resources/movement_properties.gd" id="4_mewi0"]
+[ext_resource type="PackedScene" uid="uid://brrheu18fchjy" path="res://components/tool_belt_component.tscn" id="6_wxavm"]
+[ext_resource type="PackedScene" uid="uid://cudlc2x0g05wj" path="res://nodes/tools/starscade_tool.tscn" id="7_1xu23"]
+
+[sub_resource type="GDScript" id="GDScript_y1alg"]
+resource_name = "player_camera.gd"
+script/source = "extends Camera3D
+
+
+
+@export_node_path(\"Player\") var player_path : NodePath
+
+func _ready():
+	var player : Player = get_node(player_path)
+	current = player.is_local()
+"
+
+[sub_resource type="GDScript" id="GDScript_voa3d"]
+script/source = "extends Node3D
+
+
+
+@export_node_path(\"Player\") var player_path : NodePath
+
+
+func _ready():
+	var player : Player = get_node(player_path)
+	if player.is_local():
+		visible = false
+"
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7ddpe"]
+diffuse_mode = 3
+specular_mode = 1
+
+[sub_resource type="SphereMesh" id="SphereMesh_nl8wk"]
+radius = 0.2
+height = 0.4
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_h70ht"]
+cull_mode = 1
+diffuse_mode = 3
+specular_mode = 1
+albedo_color = Color(0, 0, 0, 1)
+grow = true
+grow_amount = 0.01
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_u7j1h"]
+albedo_color = Color(0, 0, 0, 1)
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_k7j1q"]
+material = SubResource("StandardMaterial3D_u7j1h")
+top_radius = 0.03
+bottom_radius = 0.02
+height = 0.1
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_b4ouq"]
+height = 0.5
+radius = 0.25
+
+[sub_resource type="Resource" id="Resource_7qauo"]
+script = ExtResource("4_mewi0")
+gravity = 17.0
+jump_power = 6.0
+float_height = 1.5
+max_speed = 5.0
+ground_acceleration = 10.0
+friction = 8.0
+stopspeed = 2.5
+air_acceleration = 100.0
+air_limit = 1.0
+
+[node name="Player" instance=ExtResource("1_x3gup")]
+script = ExtResource("2_vx8lp")
+
+[node name="Body" type="Node3D" parent="Interpolated" index="0"]
+unique_name_in_owner = true
+
+[node name="Head" type="Node3D" parent="Interpolated/Body" index="0"]
+unique_name_in_owner = true
+
+[node name="RayForward" type="RayCast3D" parent="Interpolated/Body/Head" index="0"]
+unique_name_in_owner = true
+target_position = Vector3(0, 0, -10)
+
+[node name="Camera" type="Camera3D" parent="Interpolated/Body/Head" index="1"]
+unique_name_in_owner = true
+fov = 103.0
+near = 0.02
+script = SubResource("GDScript_y1alg")
+player_path = NodePath("../../../..")
+
+[node name="Visual" type="Node3D" parent="Interpolated/Body/Head" index="2"]
+unique_name_in_owner = true
+script = SubResource("GDScript_voa3d")
+player_path = NodePath("../../../..")
+
+[node name="MeshHead" type="MeshInstance3D" parent="Interpolated/Body/Head/Visual" index="0"]
+unique_name_in_owner = true
+material_override = SubResource("StandardMaterial3D_7ddpe")
+mesh = SubResource("SphereMesh_nl8wk")
+skeleton = NodePath("../../../../..")
+
+[node name="MeshHeadInverse" type="MeshInstance3D" parent="Interpolated/Body/Head/Visual" index="1"]
+unique_name_in_owner = true
+material_override = SubResource("StandardMaterial3D_h70ht")
+mesh = SubResource("SphereMesh_nl8wk")
+skeleton = NodePath("../../../../..")
+
+[node name="Eyes" type="Node3D" parent="Interpolated/Body/Head/Visual" index="2"]
+transform = Transform3D(0.8, 0, 0, 0, 0.8, 0, 0, 0, 0.8, 0, 0, 0)
+
+[node name="MeshEyeRight" type="MeshInstance3D" parent="Interpolated/Body/Head/Visual/Eyes" index="0"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0.1, 0.07, -0.183819)
+mesh = SubResource("CylinderMesh_k7j1q")
+skeleton = NodePath("../../..")
+
+[node name="MeshEyeLeft" type="MeshInstance3D" parent="Interpolated/Body/Head/Visual/Eyes" index="1"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, -0.1, 0.07, -0.183819)
+mesh = SubResource("CylinderMesh_k7j1q")
+skeleton = NodePath("../../..")
+
+[node name="Shape" type="CollisionShape3D" parent="." index="1"]
+shape = SubResource("CylinderShape3D_b4ouq")
+
+[node name="PlayerMovementComponent" parent="." index="2" node_paths=PackedStringArray("player", "horizontal_anchor") instance=ExtResource("3_t0tep")]
+player = NodePath("..")
+horizontal_anchor = NodePath("../Interpolated/Body")
+properties = SubResource("Resource_7qauo")
+
+[node name="MouseLookComponent" parent="." index="3" node_paths=PackedStringArray("horizontal_anchor_node", "vertical_anchor_node") instance=ExtResource("3_dni3q")]
+horizontal_anchor_node = NodePath("../Interpolated/Body")
+vertical_anchor_node = NodePath("../Interpolated/Body/Head")
+
+[node name="ToolBeltComponent" parent="." index="4" node_paths=PackedStringArray("player") instance=ExtResource("6_wxavm")]
+player = NodePath("..")
+
+[node name="StarscadeTool" parent="ToolBeltComponent" index="0" instance=ExtResource("7_1xu23")]

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cudlc2x0g05wj"]
+
+[ext_resource type="Script" path="res://nodes/tools/starscade_tool.gd" id="1_aqdcf"]
+
+[node name="StarscadeTool" type="Node"]
+script = ExtResource("1_aqdcf")

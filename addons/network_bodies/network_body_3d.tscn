@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=3 uid="uid://d067dddlxbgqa"]
+
+[ext_resource type="Script" path="res://addons/network_bodies/network_body_3d.gd" id="1_xavw7"]
+
+[node name="NetworkBody3D" type="CharacterBody3D"]
+script = ExtResource("1_xavw7")
+
+[node name="Interpolated" type="Node3D" parent="."]
+top_level = true

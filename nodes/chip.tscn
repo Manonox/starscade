@@ -1,0 +1,45 @@
+[gd_scene load_steps=7 format=3 uid="uid://db6d716580xiu"]
+
+[ext_resource type="FontFile" uid="uid://bnp2dfdyoq3wm" path="res://resources/fonts/ttf/JetBrainsMono-Bold.ttf" id="1_kh52w"]
+
+[sub_resource type="Gradient" id="Gradient_o2yno"]
+offsets = PackedFloat32Array(0, 0.413793)
+
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_65vgh"]
+fractal_octaves = 4
+fractal_gain = 1.3
+domain_warp_enabled = true
+domain_warp_type = 2
+domain_warp_amplitude = 60.0
+
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_qkwds"]
+color_ramp = SubResource("Gradient_o2yno")
+noise = SubResource("FastNoiseLite_65vgh")
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ukomu"]
+albedo_color = Color(0.184314, 0.2, 0.219608, 1)
+albedo_texture = SubResource("NoiseTexture2D_qkwds")
+
+[sub_resource type="BoxMesh" id="BoxMesh_q0wrh"]
+material = SubResource("StandardMaterial3D_ukomu")
+size = Vector3(0.1, 0.015, 0.1)
+
+[node name="Chip" type="Node3D"]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 0, 0)
+mesh = SubResource("BoxMesh_q0wrh")
+
+[node name="Label3D" type="Label3D" parent="MeshInstance3D"]
+transform = Transform3D(-1, -8.74228e-08, -7.64274e-15, 3.82137e-15, -1.31134e-07, 1, -8.74228e-08, 1, 1.31134e-07, 0, 0.008, 0)
+pixel_size = 0.001
+shaded = true
+double_sided = false
+texture_filter = 0
+modulate = Color(0.780392, 0.686275, 0.901961, 1)
+outline_modulate = Color(0.0235294, 0.0470588, 0.0666667, 0.505882)
+text = "Chip"
+font = ExtResource("1_kh52w")
+font_size = 24
+outline_size = 4
+uppercase = true

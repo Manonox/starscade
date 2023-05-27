@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://ccu0fv76v0om"]
+
+[ext_resource type="Script" path="res://components/luau_component.gd" id="1_tpuxp"]
+
+[node name="LuauComponent" type="Node"]
+script = ExtResource("1_tpuxp")

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://brrheu18fchjy"]
+
+[ext_resource type="Script" path="res://components/tool_belt_component.gd" id="1_06gyv"]
+
+[node name="ToolBeltComponent" type="Node"]
+script = ExtResource("1_06gyv")

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://cijos3coa1hy7"]
+
+[ext_resource type="Script" path="res://nodes/net.gd" id="1_conuw"]
+
+[node name="Net" type="Node"]
+script = ExtResource("1_conuw")

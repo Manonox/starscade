@@ -1,0 +1,155 @@
+[gd_scene load_steps=10 format=3 uid="uid://4setoeockysp"]
+
+[ext_resource type="Script" path="res://nodes/luau_editor.gd" id="1_22l5r"]
+[ext_resource type="Theme" uid="uid://cqfklql2nvywk" path="res://resources/luau_editor_theme.tres" id="2_je6fa"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_5lksp"]
+bg_color = Color(0.117647, 0.117647, 0.117647, 0.815686)
+
+[sub_resource type="CodeHighlighter" id="CodeHighlighter_8ohmx"]
+number_color = Color(0.709804, 0.807843, 0.658824, 1)
+symbol_color = Color(0.92549, 0.87451, 0.533333, 1)
+function_color = Color(0.862745, 0.862745, 0.666667, 1)
+member_variable_color = Color(0.611765, 0.862745, 0.996078, 1)
+
+[sub_resource type="GDScript" id="GDScript_36t48"]
+resource_name = "luau_edit.gd"
+script/source = "extends CodeEdit
+
+
+const lua_keywords := [
+	\"and\",
+	\"break\",
+	\"do\",
+	\"else\",
+	\"elseif\",
+	\"end\",
+	\"false\",
+	\"for\",
+	\"function\",
+	\"if\",
+	\"in\",
+	\"local\",
+	\"nil\",
+	\"not\",
+	\"or\",
+	\"repeat\",
+	\"return\",
+	\"then\",
+	\"true\",
+	\"until\",
+	\"while\",
+	\"continue\",
+]
+
+@onready var highlighter : CodeHighlighter = syntax_highlighter
+
+func _ready():
+	add_comment_delimiter(\"--\", \"\", true)
+	add_comment_delimiter(\"--[[\", \"]]\")
+	add_string_delimiter(\"[[\", \"]]\")
+	
+	highlighter.add_color_region(\"\\\"\", \"\\\"\", Color(\"#ce9178\"))
+	highlighter.add_color_region(\"'\", \"'\", Color(\"#ce9178\"))
+	highlighter.add_color_region(\"[[\", \"]]\", Color(\"#ce9178\"))
+	
+	highlighter.add_color_region(\"--[[\", \"]]\", Color(\"#55cc55\"))
+	highlighter.add_color_region(\"--\", \"\", Color(\"#55cc55\"))
+	
+	for keyword in lua_keywords:
+		highlighter.add_keyword_color(keyword, Color(\"ce91c4\"))
+"
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ryqip"]
+bg_color = Color(0.835294, 0.254902, 0.054902, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mkxyd"]
+bg_color = Color(0.870588, 0.47451, 0.356863, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gxlq3"]
+bg_color = Color(0.431373, 0.101961, 0.0784314, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_1juyf"]
+
+[node name="LuauEditor" type="Panel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+theme_override_styles/panel = SubResource("StyleBoxFlat_5lksp")
+script = ExtResource("1_22l5r")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 32
+
+[node name="Panel" type="Panel" parent="MarginContainer"]
+layout_mode = 2
+mouse_filter = 1
+
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="CodeEdit" type="CodeEdit" parent="MarginContainer/Panel/MarginContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("2_je6fa")
+text = "print(\"Hello world!\")
+"
+placeholder_text = "Your code goes here..."
+highlight_all_occurrences = true
+highlight_current_line = true
+syntax_highlighter = SubResource("CodeHighlighter_8ohmx")
+scroll_past_end_of_file = true
+minimap_draw = true
+gutters_draw_line_numbers = true
+script = SubResource("GDScript_36t48")
+
+[node name="Close" type="Button" parent="MarginContainer/Panel"]
+modulate = Color(1, 1, 1, 0.737255)
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -32.0
+offset_top = 8.0
+offset_right = -16.0
+offset_bottom = 24.0
+grow_horizontal = 0
+theme_override_styles/normal = SubResource("StyleBoxFlat_ryqip")
+theme_override_styles/hover = SubResource("StyleBoxFlat_mkxyd")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_gxlq3")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_1juyf")
+
+[connection signal="pressed" from="MarginContainer/Panel/Close" to="." method="close"]

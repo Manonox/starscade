@@ -1,0 +1,93 @@
+[gd_scene load_steps=7 format=3 uid="uid://ut02ptgiqp1c"]
+
+[ext_resource type="Script" path="res://scenes/game.gd" id="1_axwq1"]
+[ext_resource type="PackedScene" uid="uid://bc67kroxxy71j" path="res://nodes/player.tscn" id="2_bdeto"]
+[ext_resource type="PackedScene" uid="uid://dc1yjil3ar2e6" path="res://addons/crosshair/crosshair.tscn" id="4_1fbh1"]
+[ext_resource type="PackedScene" uid="uid://dts6xg7fk3w6s" path="res://nodes/undo.tscn" id="5_2o0od"]
+[ext_resource type="PackedScene" uid="uid://08nvry4xordw" path="res://nodes/script_creator.tscn" id="6_42486"]
+
+[sub_resource type="GDScript" id="GDScript_w1qrj"]
+resource_name = "players.gd"
+script/source = "extends Node3D
+
+
+var map := {}
+
+@export var player_scene : PackedScene
+
+func _ready():
+	multiplayer.connected_to_server.connect(self._on_connected_to_server)
+	multiplayer.peer_connected.connect(self._on_peer_connected)
+	multiplayer.peer_disconnected.connect(self._on_peer_disconnected)
+
+
+func _on_connected_to_server() -> void:
+	pass
+
+
+func _on_peer_connected(id: int) -> void:
+	if multiplayer.is_server():
+		rpc(&\"_spawn_player\", id)
+		for peer_id in multiplayer.get_peers():
+			if peer_id != id:
+				rpc_id(id, &\"_spawn_player\", peer_id)
+
+
+func _on_peer_disconnected(id: int) -> void:
+	if multiplayer.is_server():
+		rpc(&\"_remove_player\", id)
+
+
+@rpc(\"authority\", \"call_local\", \"reliable\")
+func _spawn_player(id: int) -> void:
+	# print(multiplayer.get_unique_id(), \" spawned \", id)
+	var player : Player = player_scene.instantiate()
+	player.name = \"Player\" + str(id)
+	player.peer_id = id
+	map[id] = player
+	player.position = Vector3(0.0, 2.0, 0.0)
+	add_child(player)
+
+@rpc(\"authority\", \"call_local\", \"reliable\")
+func _remove_player(id: int) -> void:
+	var player = map.get(id)
+	if player:
+		remove_child(player)
+		map[id] = null
+"
+
+[node name="Game" type="Node3D"]
+script = ExtResource("1_axwq1")
+
+[node name="Map" type="Node3D" parent="."]
+
+[node name="Entities" type="Node3D" parent="."]
+
+[node name="MultiplayerSpawner" type="MultiplayerSpawner" parent="."]
+spawn_path = NodePath("../Entities")
+
+[node name="Players" type="Node3D" parent="."]
+script = SubResource("GDScript_w1qrj")
+player_scene = ExtResource("2_bdeto")
+
+[node name="UI" type="Control" parent="."]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Crosshair" parent="UI" instance=ExtResource("4_1fbh1")]
+unique_name_in_owner = true
+rotation = 0.785398
+color = Color(1, 1, 1, 0.588235)
+length = 2
+gap = 3
+
+[node name="ScriptCreator" parent="." node_paths=PackedStringArray("game") instance=ExtResource("6_42486")]
+game = NodePath("..")
+
+[node name="Undo" parent="." instance=ExtResource("5_2o0od")]

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dts6xg7fk3w6s"]
+
+[ext_resource type="Script" path="res://nodes/undo.gd" id="1_jyl5r"]
+
+[node name="Undo" type="Node"]
+script = ExtResource("1_jyl5r")

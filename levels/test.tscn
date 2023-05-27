@@ -1,0 +1,94 @@
+[gd_scene load_steps=12 format=3 uid="uid://cug826nbds7f6"]
+
+[ext_resource type="PackedScene" uid="uid://dxw7cledbpiia" path="res://addons/proto_csgs/proto_csg_box_3d.tscn" id="1_r146l"]
+[ext_resource type="Texture2D" uid="uid://byi7wwf0usrfa" path="res://addons/proto_csgs/textures/dark/texture_01.png" id="2_83204"]
+[ext_resource type="Texture2D" uid="uid://dv10y28pl7d0u" path="res://addons/proto_csgs/textures/orange/texture_13.png" id="3_gqgwr"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_kvihy"]
+sky_top_color = Color(0.192157, 0.541176, 0.780392, 1)
+sky_horizon_color = Color(0.466667, 0.694118, 0.772549, 1)
+ground_bottom_color = Color(0.466667, 0.694118, 0.772549, 1)
+ground_horizon_color = Color(0.466667, 0.694118, 0.772549, 1)
+sun_angle_max = 3.33
+sun_curve = 0.243682
+
+[sub_resource type="Sky" id="Sky_2ogy7"]
+sky_material = SubResource("ProceduralSkyMaterial_kvihy")
+
+[sub_resource type="Environment" id="Environment_foclm"]
+background_mode = 2
+sky = SubResource("Sky_2ogy7")
+ambient_light_color = Color(0.215686, 0.164706, 0.509804, 1)
+ambient_light_sky_contribution = 0.33
+ambient_light_energy = 2.27
+tonemap_mode = 2
+adjustment_enabled = true
+adjustment_contrast = 1.08
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_poq5s"]
+resource_local_to_scene = true
+albedo_texture = ExtResource("2_83204")
+uv1_triplanar = true
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_e060r"]
+resource_local_to_scene = true
+albedo_texture = ExtResource("3_gqgwr")
+uv1_triplanar = true
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_bvpnm"]
+resource_local_to_scene = true
+albedo_texture = ExtResource("3_gqgwr")
+uv1_triplanar = true
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_vgrac"]
+resource_local_to_scene = true
+albedo_texture = ExtResource("3_gqgwr")
+uv1_triplanar = true
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wl4ww"]
+resource_local_to_scene = true
+albedo_texture = ExtResource("3_gqgwr")
+uv1_triplanar = true
+
+[node name="Test" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_foclm")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(-0.866023, -0.433016, 0.250001, 0, 0.499998, 0.866027, -0.500003, 0.749999, -0.43301, 0, 0, 0)
+light_color = Color(0.976471, 1, 1, 1)
+shadow_enabled = true
+
+[node name="ProtoCSGBox3D" parent="." instance=ExtResource("1_r146l")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+size = Vector3(40, 1, 40)
+material = SubResource("StandardMaterial3D_poq5s")
+
+[node name="Cargo" parent="." instance=ExtResource("1_r146l")]
+transform = Transform3D(0.908778, 0, 0.41728, 0, 1, 0, -0.41728, 0, 0.908778, -1.5, 1, -5)
+size = Vector3(6, 2, 2)
+material = SubResource("StandardMaterial3D_e060r")
+block_color = 3
+block_style = 12
+
+[node name="Cargo2" parent="." instance=ExtResource("1_r146l")]
+transform = Transform3D(0.937665, 0, -0.347541, 0, 1, 0, 0.347541, 0, 0.937665, -1.5, 1, 4.5)
+size = Vector3(6, 2, 2)
+material = SubResource("StandardMaterial3D_bvpnm")
+block_color = 3
+block_style = 12
+
+[node name="Cargo3" parent="." instance=ExtResource("1_r146l")]
+transform = Transform3D(-0.0930135, 0, -0.995665, 0, 1, 0, 0.995665, 0, -0.0930135, 11.5, 1, 8.5)
+size = Vector3(6, 2, 2)
+material = SubResource("StandardMaterial3D_vgrac")
+block_color = 3
+block_style = 12
+
+[node name="Cargo4" parent="." instance=ExtResource("1_r146l")]
+transform = Transform3D(-0.347541, 0, -0.937665, 0, 1, 0, 0.937665, 0, -0.347541, 11.5, 1, -8)
+size = Vector3(6, 2, 2)
+material = SubResource("StandardMaterial3D_wl4ww")
+block_color = 3
+block_style = 12

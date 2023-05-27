@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dc1yjil3ar2e6"]
+
+[ext_resource type="Script" path="res://addons/crosshair/crosshair.gd" id="1_usdbk"]
+
+[node name="Crosshair" type="Marker2D"]
+script = ExtResource("1_usdbk")

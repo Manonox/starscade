@@ -1,0 +1,283 @@
+[gd_scene load_steps=15 format=3 uid="uid://ddepfiurcimyl"]
+
+[ext_resource type="Script" path="res://nodes/console.gd" id="1_c1o70"]
+[ext_resource type="Theme" uid="uid://cqfklql2nvywk" path="res://resources/luau_editor_theme.tres" id="2_pkhgx"]
+[ext_resource type="FontFile" uid="uid://38lmb4mhdwya" path="res://resources/fonts/ttf/JetBrainsMono-Regular.ttf" id="3_e4ifh"]
+[ext_resource type="FontFile" uid="uid://bnp2dfdyoq3wm" path="res://resources/fonts/ttf/JetBrainsMono-Bold.ttf" id="4_gundg"]
+[ext_resource type="FontFile" uid="uid://b6dxinse7yetj" path="res://resources/fonts/ttf/JetBrainsMono-Italic.ttf" id="5_ridqj"]
+[ext_resource type="FontFile" uid="uid://di1bojontcf15" path="res://resources/fonts/ttf/JetBrainsMono-BoldItalic.ttf" id="6_53mkm"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_uxn8d"]
+line_spacing = 0.0
+font_size = 14
+outline_size = 1
+outline_color = Color(0, 0, 0, 1)
+shadow_color = Color(0, 0, 0, 0.545098)
+
+[sub_resource type="Animation" id="Animation_1k481"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:visible")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [false]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("MainPanel:lower_percent")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [0.0]
+}
+
+[sub_resource type="Animation" id="Animation_8qnvt"]
+resource_name = "main_close"
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:visible")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(1),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [false]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("MainPanel:lower_percent")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 1),
+"transitions": PackedFloat32Array(0.25, 0.25),
+"update": 0,
+"values": [1.0, 0.0]
+}
+
+[sub_resource type="Animation" id="Animation_23we5"]
+resource_name = "main_open"
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:visible")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 1,
+"values": [true]
+}
+tracks/1/type = "value"
+tracks/1/imported = false
+tracks/1/enabled = true
+tracks/1/path = NodePath("MainPanel:lower_percent")
+tracks/1/interp = 1
+tracks/1/loop_wrap = true
+tracks/1/keys = {
+"times": PackedFloat32Array(0, 1),
+"transitions": PackedFloat32Array(0.196146, 0.183011),
+"update": 0,
+"values": [0.0, 1.0]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_y7nl3"]
+_data = {
+"RESET": SubResource("Animation_1k481"),
+"main_close": SubResource("Animation_8qnvt"),
+"main_open": SubResource("Animation_23we5")
+}
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_mc1vr"]
+bg_color = Color(0.117647, 0.117647, 0.117647, 0.670588)
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+
+[sub_resource type="GDScript" id="GDScript_fteys"]
+script/source = "extends Panel
+
+
+@export var lower_percent : float = 0.0 :
+	set(value):
+		lower_percent = value
+		position.y = (value - 1.0) * size.y
+"
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_s8vwg"]
+bg_color = Color(0.219608, 0.219608, 0.219608, 0.533333)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[node name="Console" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+theme = ExtResource("2_pkhgx")
+script = ExtResource("1_c1o70")
+stdout_server_color = Color(0.572549, 0.615686, 0.913725, 1)
+stdout_client_color = Color(0.831373, 0.705882, 0.478431, 1)
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_right = 512.0
+offset_bottom = -392.0
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+
+[node name="Overlay" type="Label" parent="MarginContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 1
+theme = ExtResource("2_pkhgx")
+label_settings = SubResource("LabelSettings_uxn8d")
+text_overrun_behavior = 3
+
+[node name="MainControl" type="Control" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="MainControl"]
+unique_name_in_owner = true
+speed_scale = 4.0
+libraries = {
+"": SubResource("AnimationLibrary_y7nl3")
+}
+
+[node name="MainPanel" type="Panel" parent="MainControl"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -397.0
+offset_bottom = -648.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_mc1vr")
+script = SubResource("GDScript_fteys")
+metadata/_edit_group_ = true
+
+[node name="MarginContainer" type="MarginContainer" parent="MainControl/MainPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="Panel" type="Panel" parent="MainControl/MainPanel/MarginContainer"]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="MainControl/MainPanel/MarginContainer/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="Control" type="Control" parent="MainControl/MainPanel/MarginContainer/Panel/MarginContainer"]
+layout_mode = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="MainControl/MainPanel/MarginContainer/Panel/MarginContainer/Control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 46
+
+[node name="Main" type="RichTextLabel" parent="MainControl/MainPanel/MarginContainer/Panel/MarginContainer/Control/MarginContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_fonts/normal_font = ExtResource("3_e4ifh")
+theme_override_fonts/bold_font = ExtResource("4_gundg")
+theme_override_fonts/italics_font = ExtResource("5_ridqj")
+theme_override_fonts/bold_italics_font = ExtResource("6_53mkm")
+theme_override_fonts/mono_font = ExtResource("3_e4ifh")
+scroll_following = true
+autowrap_mode = 1
+
+[node name="Input" type="LineEdit" parent="MainControl/MainPanel/MarginContainer/Panel/MarginContainer/Control"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -31.0
+grow_horizontal = 2
+grow_vertical = 0
+placeholder_text = "i don't have commands yet :("
+editable = false
+
+[node name="BackToPresentButton" type="Button" parent="MainControl/MainPanel/MarginContainer/Panel/MarginContainer/Control"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -48.0
+offset_right = -16.0
+offset_bottom = -40.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_styles/normal = SubResource("StyleBoxFlat_s8vwg")
+
+[node name="Label" type="Label" parent="MainControl/MainPanel/MarginContainer/Panel/MarginContainer/Control/BackToPresentButton"]
+modulate = Color(1, 1, 1, 0.203922)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -10.0
+offset_bottom = 8.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "..."
+horizontal_alignment = 1
+
+[connection signal="gui_input" from="MainControl/MainPanel/MarginContainer/Panel/MarginContainer/Control/MarginContainer/Main" to="." method="_on_main_gui_input"]
+[connection signal="pressed" from="MainControl/MainPanel/MarginContainer/Panel/MarginContainer/Control/BackToPresentButton" to="." method="_on_back_to_present_button_pressed"]

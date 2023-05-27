@@ -1,0 +1,84 @@
+[gd_scene load_steps=3 format=3 uid="uid://cmaai4jyo8mv6"]
+
+[ext_resource type="Script" path="res://scenes/menu.gd" id="1_oeuxo"]
+[ext_resource type="PackedScene" uid="uid://ut02ptgiqp1c" path="res://scenes/game.tscn" id="2_it6u4"]
+
+[node name="Menu" type="ColorRect"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.486275, 0.458824, 0.576471, 1)
+script = ExtResource("1_oeuxo")
+game_scene = ExtResource("2_it6u4")
+
+[node name="Singleplayer" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -320.0
+offset_top = -132.0
+offset_right = 320.0
+offset_bottom = -68.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Singleplayer"
+
+[node name="Host" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -320.0
+offset_top = -36.0
+offset_right = 320.0
+offset_bottom = 28.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Host"
+
+[node name="ConnectGroup" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -320.0
+offset_top = 60.0
+offset_right = 320.0
+offset_bottom = 124.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Button" type="Button" parent="ConnectGroup"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 448.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Connect"
+
+[node name="IP" type="LineEdit" parent="ConnectGroup"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -224.0
+grow_horizontal = 2
+grow_vertical = 2
+placeholder_text = "IP"
+alignment = 1
+
+[connection signal="pressed" from="Singleplayer" to="." method="play_singleplayer"]
+[connection signal="pressed" from="Host" to="." method="play_host"]
+[connection signal="pressed" from="ConnectGroup/Button" to="." method="_on_connect_pressed"]
